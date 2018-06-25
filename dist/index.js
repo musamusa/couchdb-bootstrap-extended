@@ -339,11 +339,11 @@ var CouchDBBootstrap = function () {
     key: 'ensureDBSetup',
     value: function ensureDBSetup() {
       var internalInstance = CouchDBBootstrapInternal.getInstance(this.couchdbFolderPath, this.couchdbUrl);
-      var userDB = [internalInstance.getBaseUrl(), '_users'].join('');
-      var replicator = [internalInstance.getBaseUrl(), '_replicator'].join('');
-      var globalChanges = [internalInstance.getBaseUrl(), '_global_changes'].join('');
-      var metadata = [internalInstance.getBaseUrl(), '_metadata'].join('');
-      var dbUrl = this.couchdbUrl;
+      var userDB = [this.getDBBaseUrl(), '_users'].join('');
+      var replicator = [this.getDBBaseUrl(), '_replicator'].join('');
+      var globalChanges = [this.getDBBaseUrl(), '_global_changes'].join('');
+      var metadata = [this.getDBBaseUrl(), '_metadata'].join('');
+      var dbUrl = this.getDBFUllUrl();
       var dbList = [userDB, replicator, globalChanges, metadata, dbUrl];
 
       return _bluebird2.default.mapSeries(dbList, function (db) {
@@ -356,6 +356,8 @@ var CouchDBBootstrap = function () {
   }, {
     key: 'bootstrap',
     value: function bootstrap() {
+      var _this5 = this;
+
       var options = { mapDbName: {} };
       var isObject = Object.prototype.toString.call(this.options.dbOptions) === '[object Object]';
       var internalInstance = CouchDBBootstrapInternal.getInstance(this.couchdbFolderPath, this.couchdbUrl);
@@ -366,7 +368,7 @@ var CouchDBBootstrap = function () {
 
       return new _bluebird2.default(function (resolve, reject) {
         (0, _couchdbBootstrap2.default)({
-          url: internalInstance.getBaseUrl()
+          url: _this5.getDBBaseUrl()
         }, internalInstance.couchWorkingDir, options, internalInstance.bootstrapCallback.bind(internalInstance, resolve, reject));
       });
     }
@@ -374,7 +376,7 @@ var CouchDBBootstrap = function () {
     key: 'configureCouch',
     value: function configureCouch() {
       var internalInstance = CouchDBBootstrapInternal.getInstance(this.couchdbFolderPath, this.couchdbUrl);
-      return _requestPromise2.default.get(internalInstance.getBaseUrl() + '/_membership', { json: true }).then(internalInstance.getConfigByNode.bind(internalInstance)).then(internalInstance.pushToCouch.bind(internalInstance)).catch(function (error) {
+      return _requestPromise2.default.get(this.getDBBaseUrl() + '/_membership', { json: true }).then(internalInstance.getConfigByNode.bind(internalInstance)).then(internalInstance.pushToCouch.bind(internalInstance)).catch(function (error) {
         if (error.statusCode === 400) {
           var settings = internalInstance.getConfigWithoutNode();
           return internalInstance.pushToCouch(settings);
@@ -397,7 +399,7 @@ var CouchDBBootstrap = function () {
   }, {
     key: 'runAllSetup',
     value: function runAllSetup() {
-      var _this5 = this;
+      var _this6 = this;
 
       this.ensureDBSetup().then(this.createWorkingDir.bind(this)).then(function (resp) {
         return console.log(resp);
@@ -408,7 +410,7 @@ var CouchDBBootstrap = function () {
       }).catch(function (err) {
         return console.log(err);
       }).finally(function () {
-        _this5.removeWorkingDir().catch(function (error) {
+        _this6.removeWorkingDir().catch(function (error) {
           return console.log('error removing working dir ' + error.message);
         });
       });

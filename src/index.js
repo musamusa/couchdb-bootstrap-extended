@@ -266,11 +266,11 @@ class CouchDBBootstrap {
 
   ensureDBSetup () {
     const internalInstance = CouchDBBootstrapInternal.getInstance(this.couchdbFolderPath, this.couchdbUrl)
-    const userDB = [internalInstance.getBaseUrl(), '_users'].join('')
-    const replicator = [internalInstance.getBaseUrl(), '_replicator'].join('')
-    const globalChanges = [internalInstance.getBaseUrl(), '_global_changes'].join('')
-    const metadata = [internalInstance.getBaseUrl(), '_metadata'].join('')
-    const dbUrl = this.couchdbUrl
+    const userDB = [this.getDBBaseUrl(), '_users'].join('')
+    const replicator = [this.getDBBaseUrl(), '_replicator'].join('')
+    const globalChanges = [this.getDBBaseUrl(), '_global_changes'].join('')
+    const metadata = [this.getDBBaseUrl(), '_metadata'].join('')
+    const dbUrl = this.getDBFUllUrl()
     const dbList = [userDB, replicator, globalChanges, metadata, dbUrl]
 
     return Promise.mapSeries(dbList, (db) => {
@@ -294,7 +294,7 @@ class CouchDBBootstrap {
     return new Promise((resolve, reject) => {
       bootstrap(
         {
-          url: internalInstance.getBaseUrl()
+          url: this.getDBBaseUrl()
         },
         internalInstance.couchWorkingDir,
         options,
@@ -305,7 +305,7 @@ class CouchDBBootstrap {
 
   configureCouch () {
     const internalInstance = CouchDBBootstrapInternal.getInstance(this.couchdbFolderPath, this.couchdbUrl)
-    return request.get(`${internalInstance.getBaseUrl()}/_membership`, {json: true})
+    return request.get(`${this.getDBBaseUrl()}/_membership`, {json: true})
       .then(internalInstance.getConfigByNode.bind(internalInstance))
       .then(internalInstance.pushToCouch.bind(internalInstance))
       .catch((error) => {
