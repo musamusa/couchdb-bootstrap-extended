@@ -236,9 +236,10 @@ class CouchDBBootstrapInternal {
 }
 
 class CouchDBBootstrap {
-  constructor (couchdbFolderPath, couchdbUrl) {
+  constructor (couchdbFolderPath, couchdbUrl, dbOptions) {
     this.couchdbUrl = couchdbUrl
     this.couchdbFolderPath = couchdbFolderPath
+    this.dbObtions = dbOptions || {}
   }
 
   ensureDBSetup () {
@@ -260,14 +261,21 @@ class CouchDBBootstrap {
   }
 
   bootstrap () {
+    const options = {mapDbName: {}}
+    const isObject = Object.prototype.toString.call(this.dbObtions) === '[object Object]'
     const internalInstance = CouchDBBootstrapInternal.getInstance(this.couchdbFolderPath, this.couchdbUrl)
+
+    if (isObject && this.dbObtions.src && this.dbObtions.target) {
+      options.mapDbName[this.dbObtions.src] = this.dbObtions.target
+    }
+
     return new Promise((resolve, reject) => {
       bootstrap(
         {
           url: internalInstance.getBaseUrl()
         },
         internalInstance.couchWorkingDir,
-        {},
+        options,
         internalInstance.bootstrapCallback.bind(internalInstance, resolve, reject)
       )
     })
@@ -315,8 +323,8 @@ class CouchDBBootstrap {
       })
   }
 
-  static getInstance (couchdbFolderPath, couchdbUrl) {
-    bootstrapInstance = bootstrapInstance || new CouchDBBootstrap(couchdbFolderPath, couchdbUrl)
+  static getInstance (couchdbFolderPath, couchdbUrl, dbOptions) {
+    bootstrapInstance = bootstrapInstance || new CouchDBBootstrap(couchdbFolderPath, couchdbUrl, dbOptions)
     return bootstrapInstance
   }
 }

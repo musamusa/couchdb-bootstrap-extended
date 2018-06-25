@@ -300,11 +300,12 @@ var CouchDBBootstrapInternal = function () {
 }();
 
 var CouchDBBootstrap = function () {
-  function CouchDBBootstrap(couchdbFolderPath, couchdbUrl) {
+  function CouchDBBootstrap(couchdbFolderPath, couchdbUrl, dbOptions) {
     _classCallCheck(this, CouchDBBootstrap);
 
     this.couchdbUrl = couchdbUrl;
     this.couchdbFolderPath = couchdbFolderPath;
+    this.dbObtions = dbOptions || {};
   }
 
   _createClass(CouchDBBootstrap, [{
@@ -328,11 +329,18 @@ var CouchDBBootstrap = function () {
   }, {
     key: 'bootstrap',
     value: function bootstrap() {
+      var options = { mapDbName: {} };
+      var isObject = Object.prototype.toString.call(this.dbObtions) === '[object Object]';
       var internalInstance = CouchDBBootstrapInternal.getInstance(this.couchdbFolderPath, this.couchdbUrl);
+
+      if (isObject && this.dbObtions.src && this.dbObtions.target) {
+        options.mapDbName[this.dbObtions.src] = this.dbObtions.target;
+      }
+
       return new _bluebird2.default(function (resolve, reject) {
         (0, _couchdbBootstrap2.default)({
           url: internalInstance.getBaseUrl()
-        }, internalInstance.couchWorkingDir, {}, internalInstance.bootstrapCallback.bind(internalInstance, resolve, reject));
+        }, internalInstance.couchWorkingDir, options, internalInstance.bootstrapCallback.bind(internalInstance, resolve, reject));
       });
     }
   }, {
@@ -380,8 +388,8 @@ var CouchDBBootstrap = function () {
     }
   }], [{
     key: 'getInstance',
-    value: function getInstance(couchdbFolderPath, couchdbUrl) {
-      bootstrapInstance = bootstrapInstance || new CouchDBBootstrap(couchdbFolderPath, couchdbUrl);
+    value: function getInstance(couchdbFolderPath, couchdbUrl, dbOptions) {
+      bootstrapInstance = bootstrapInstance || new CouchDBBootstrap(couchdbFolderPath, couchdbUrl, dbOptions);
       return bootstrapInstance;
     }
   }]);
