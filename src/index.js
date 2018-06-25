@@ -8,6 +8,7 @@ import bootstrap from 'couchdb-bootstrap'
 import Promise from 'bluebird'
 import request from 'request-promise'
 import ensure from 'couchdb-ensure'
+import Utility from 'node-code-utility'
 
 let instance
 let bootstrapInstance
@@ -236,10 +237,31 @@ class CouchDBBootstrapInternal {
 }
 
 class CouchDBBootstrap {
-  constructor (couchdbFolderPath, couchdbUrl, dbOptions) {
-    this.couchdbUrl = couchdbUrl
-    this.couchdbFolderPath = couchdbFolderPath
-    this.dbObtions = dbOptions || {}
+  constructor (couchDBOptions) {
+    this.options = Utility.is.object(couchDBOptions) ? couchDBOptions : {}
+    this.options.db = this.options.db || 'localDB'
+    this.options.dbOptions = Utility.is.object(this.options.dbOptions) ? this.options.dbOptions : {}
+
+    this.couchdbUrl = this.getDBFUllUrl()
+    this.couchdbFolderPath = this.options.couchdbFolderPath
+  }
+
+  getDBBaseUrl () {
+    const urlObject = new url.URL(this.options.host)
+    if (this.options.auth && Utility.is.object(this.options.auth) && this.options.auth.username && this.options.auth.password) {
+      urlObject.auth = `${this.options.auth.username}:${this.options.auth.password}`
+    }
+    urlObject.path = ''
+    urlObject.pathname = ''
+    urlObject.port = this.options.port || 80
+    return url.format(urlObject)
+  }
+
+  getDBFUllUrl () {
+    const urlObject = new url.URL(this.getDBBaseUrl())
+    urlObject.path = `/${this.options.db}`
+    urlObject.pathname = urlObject.path
+    return url.format(urlObject)
   }
 
   ensureDBSetup () {
@@ -262,11 +284,11 @@ class CouchDBBootstrap {
 
   bootstrap () {
     const options = {mapDbName: {}}
-    const isObject = Object.prototype.toString.call(this.dbObtions) === '[object Object]'
+    const isObject = Object.prototype.toString.call(this.options.dbOptions) === '[object Object]'
     const internalInstance = CouchDBBootstrapInternal.getInstance(this.couchdbFolderPath, this.couchdbUrl)
 
-    if (isObject && this.dbObtions.src && this.dbObtions.target) {
-      options.mapDbName[this.dbObtions.src] = this.dbObtions.target
+    if (isObject && this.options.dbOptions.src && this.options.dbOptions.target) {
+      options.mapDbName[this.options.dbOptions.src] = this.options.dbOptions.target
     }
 
     return new Promise((resolve, reject) => {
@@ -323,8 +345,8 @@ class CouchDBBootstrap {
       })
   }
 
-  static getInstance (couchdbFolderPath, couchdbUrl, dbOptions) {
-    bootstrapInstance = bootstrapInstance || new CouchDBBootstrap(couchdbFolderPath, couchdbUrl, dbOptions)
+  static getInstance (couchDBOptions) {
+    bootstrapInstance = bootstrapInstance || new CouchDBBootstrap(couchDBOptions)
     return bootstrapInstance
   }
 }

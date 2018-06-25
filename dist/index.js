@@ -40,6 +40,10 @@ var _couchdbEnsure = require('couchdb-ensure');
 
 var _couchdbEnsure2 = _interopRequireDefault(_couchdbEnsure);
 
+var _nodeCodeUtility = require('node-code-utility');
+
+var _nodeCodeUtility2 = _interopRequireDefault(_nodeCodeUtility);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -300,15 +304,38 @@ var CouchDBBootstrapInternal = function () {
 }();
 
 var CouchDBBootstrap = function () {
-  function CouchDBBootstrap(couchdbFolderPath, couchdbUrl, dbOptions) {
+  function CouchDBBootstrap(couchDBOptions) {
     _classCallCheck(this, CouchDBBootstrap);
 
-    this.couchdbUrl = couchdbUrl;
-    this.couchdbFolderPath = couchdbFolderPath;
-    this.dbObtions = dbOptions || {};
+    this.options = _nodeCodeUtility2.default.is.object(couchDBOptions) ? couchDBOptions : {};
+    this.options.db = this.options.db || 'localDB';
+    this.options.dbOptions = _nodeCodeUtility2.default.is.object(this.options.dbOptions) ? this.options.dbOptions : {};
+
+    this.couchdbUrl = this.getDBFUllUrl();
+    this.couchdbFolderPath = this.options.couchdbFolderPath;
   }
 
   _createClass(CouchDBBootstrap, [{
+    key: 'getDBBaseUrl',
+    value: function getDBBaseUrl() {
+      var urlObject = new _url2.default.URL(this.options.host);
+      if (this.options.auth && _nodeCodeUtility2.default.is.object(this.options.auth) && this.options.auth.username && this.options.auth.password) {
+        urlObject.auth = this.options.auth.username + ':' + this.options.auth.password;
+      }
+      urlObject.path = '';
+      urlObject.pathname = '';
+      urlObject.port = this.options.port || 80;
+      return _url2.default.format(urlObject);
+    }
+  }, {
+    key: 'getDBFUllUrl',
+    value: function getDBFUllUrl() {
+      var urlObject = new _url2.default.URL(this.getDBBaseUrl());
+      urlObject.path = '/' + this.options.db;
+      urlObject.pathname = urlObject.path;
+      return _url2.default.format(urlObject);
+    }
+  }, {
     key: 'ensureDBSetup',
     value: function ensureDBSetup() {
       var internalInstance = CouchDBBootstrapInternal.getInstance(this.couchdbFolderPath, this.couchdbUrl);
@@ -330,11 +357,11 @@ var CouchDBBootstrap = function () {
     key: 'bootstrap',
     value: function bootstrap() {
       var options = { mapDbName: {} };
-      var isObject = Object.prototype.toString.call(this.dbObtions) === '[object Object]';
+      var isObject = Object.prototype.toString.call(this.options.dbOptions) === '[object Object]';
       var internalInstance = CouchDBBootstrapInternal.getInstance(this.couchdbFolderPath, this.couchdbUrl);
 
-      if (isObject && this.dbObtions.src && this.dbObtions.target) {
-        options.mapDbName[this.dbObtions.src] = this.dbObtions.target;
+      if (isObject && this.options.dbOptions.src && this.options.dbOptions.target) {
+        options.mapDbName[this.options.dbOptions.src] = this.options.dbOptions.target;
       }
 
       return new _bluebird2.default(function (resolve, reject) {
@@ -388,8 +415,8 @@ var CouchDBBootstrap = function () {
     }
   }], [{
     key: 'getInstance',
-    value: function getInstance(couchdbFolderPath, couchdbUrl, dbOptions) {
-      bootstrapInstance = bootstrapInstance || new CouchDBBootstrap(couchdbFolderPath, couchdbUrl, dbOptions);
+    value: function getInstance(couchDBOptions) {
+      bootstrapInstance = bootstrapInstance || new CouchDBBootstrap(couchDBOptions);
       return bootstrapInstance;
     }
   }]);
