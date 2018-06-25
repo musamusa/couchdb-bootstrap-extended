@@ -1,6 +1,6 @@
 {
   "name": "couchdb-bootstrap-extended",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "main": "index.js",
   "repository": "git@github.com:musamusa/couchdb-bootstrap-extended.git",
   "author": "Musa Musa <musakunte@gmail.com>",
